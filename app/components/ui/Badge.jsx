@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { dlStatus } from '@/app/lib/deadlineUtils';
 
 /** Generic coloured pill badge. */
@@ -13,9 +14,18 @@ export function Badge({ label, color, bg, border }) {
   );
 }
 
-/** Deadline-aware badge — derives colour from remaining time. */
+/**
+ * Deadline-aware badge.
+ * Renders null on the server (SSR) and computes the real status
+ * only on the client after hydration — prevents new Date() mismatch.
+ */
 export function DeadlineBadge({ deadline }) {
-  const s = dlStatus(deadline);
+  const [s, setS] = useState(null);
+
+  useEffect(() => {
+    setS(dlStatus(deadline));
+  }, [deadline]);
+
   if (!s) return null;
   return <Badge label={s.label} color={s.color} bg={s.bg} border={s.border} />;
 }

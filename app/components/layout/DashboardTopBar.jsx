@@ -1,6 +1,6 @@
 'use client';
-import ProfileMenu from '@/app/components/ProfileMenu';
-import styles from '@/app/components/dashboard.module.css';
+import ProfileMenu from '@/app/components/layout/ProfileMenu';
+import styles from '@/app/components/shared/dashboard.module.css';
 
 /**
  * DashboardTopBar — back button + breadcrumb + profile menu.

@@ -4,7 +4,7 @@ import { scoreColor } from '@/app/lib/deadlineUtils';
 import { Q_BREAKDOWN } from '@/app/lib/mockData';
 import { GhostButton, SmPurpleButton, PrimaryButton } from '@/app/components/ui/Button';
 import { SubjectBadge } from '@/app/components/ui/Badge';
-import styles from '@/app/components/dashboard.module.css';
+import styles from '@/app/components/shared/dashboard.module.css';
 
 const SUBJECT_COLORS = { Algebra: '#7c3aed', Calculus: '#0ea5e9', Geometry: '#ec4899' };
 const QUESTIONS = ['Simplify the expression', 'Find the roots', 'Prove the identity', 'Evaluate the integral', 'Solve for x', 'Sketch the graph', 'Find the derivative', 'Compute the limit', 'Apply the theorem', 'State and prove'];

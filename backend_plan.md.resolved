@@ -1,0 +1,61 @@
+# MathMax Backend — Implementation Plan
+
+## Tech Stack
+- **Database:** SQLite via `better-sqlite3` (zero-config, file-based, no external server)
+- **Auth:** `bcryptjs` for password hashing + JWT via `jsonwebtoken` for session tokens (stored in HTTP-only cookies)
+- **File Uploads:** `multer` (disk storage) → `uploads/` directory in project root
+- **API Routes:** Next.js App Router API routes (`app/api/...`)
+- **AI Evaluation:** Mock scoring engine (pluggable for real AI later)
+
+## Database Schema
+
+```
+users         (id, name, email, password_hash, role, created_at)
+subjects      (id, name, color, teacher_id, created_at)
+papers        (id, subject_id, title, code, deadline, qp_path, solution_path, created_at)
+submissions   (id, paper_id, student_id, file_path, score, feedback, q_breakdown, status, submitted_at, graded_at)
+reevaluations (id, submission_id, student_id, question, reason, status, teacher_note, created_at, resolved_at)
+```
+
+## API Routes
+
+| Method | Route | Role | Purpose |
+|--------|-------|------|---------|
+| POST | `/api/auth/register` | public | Create account |
+| POST | `/api/auth/login` | public | Sign in → set cookie |
+| POST | `/api/auth/logout` | any | Clear cookie |
+| GET | `/api/auth/me` | any | Get current user from cookie |
+| GET | `/api/subjects` | teacher | List teacher's subjects |
+| POST | `/api/subjects` | teacher | Create subject |
+| DELETE | `/api/subjects/[id]` | teacher | Delete subject |
+| GET | `/api/papers?subjectId=X` | teacher | List papers for a subject |
+| POST | `/api/papers` | teacher | Create paper + upload QP file |
+| GET | `/api/papers/lookup?code=X` | student | Lookup paper by QP code |
+| GET | `/api/papers/deadlines` | student | Student's available papers |
+| GET | `/api/submissions?paperId=X` | teacher | All submissions for a paper |
+| POST | `/api/submissions` | student | Upload answer sheet |
+| GET | `/api/submissions/[id]` | any | Single submission detail |
+| PATCH | `/api/submissions/[id]/marks` | teacher | Override AI marks |
+| GET | `/api/results` | student | Student's graded results |
+| GET | `/api/results/stats` | student | Aggregate stats for home |
+| GET | `/api/analytics?paperId=X` | teacher | Analytics for a paper |
+| GET | `/api/reevaluations` | teacher | All reeval requests |
+| POST | `/api/reevaluations` | student | Request re-evaluation |
+| PATCH | `/api/reevaluations/[id]` | teacher | Approve/reject |
+| GET | `/api/export/csv?paperId=X` | teacher | Download CSV |
+
+## Build Order
+1. Dependencies + DB init script
+2. Auth middleware + API routes
+3. Subjects + Papers CRUD
+4. File upload (QP + answer sheets)
+5. Mock AI grading engine
+6. Submissions + Results
+7. Re-evaluation flow
+8. Analytics + Export
+9. Wire all frontend components to real API
+10. Auth guards on pages
+
+> [!IMPORTANT]
+> Every frontend component currently imports from `mockData.js`. The migration strategy is:
+> create `app/lib/api.js` with fetch helpers, then update each component one by one.

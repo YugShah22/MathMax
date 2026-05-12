@@ -5,7 +5,7 @@ import { dlStatus } from '@/app/lib/deadlineUtils';
 import FileDropZone from '@/app/components/ui/FileDropZone';
 import { PrimaryButton, GhostButton } from '@/app/components/ui/Button';
 import { DeadlineBadge } from '@/app/components/ui/Badge';
-import styles from '@/app/components/dashboard.module.css';
+import styles from '@/app/components/shared/dashboard.module.css';
 
 export default function UploadSheetForm({ prefilledCode = '', onCancel }) {
   const [code, setCode]       = useState(prefilledCode);

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { register, login } from '@/app/lib/api';
 import styles from './auth.module.css';
 
 export default function AuthPage() {
@@ -32,15 +33,26 @@ export default function AuthPage() {
     e.preventDefault();
     if (!email || !password) { setError('Email and password are required.'); return; }
     if (mode === 'register' && !name) { setError('Name is required.'); return; }
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
     setLoading(true);
     setError('');
-    // Simulate API — connect backend later
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    // Store role for dashboard to read
-    sessionStorage.setItem('mm_role', role);
-    sessionStorage.setItem('mm_name', name || email.split('@')[0]);
-    router.push(role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+    try {
+      let data;
+      if (mode === 'register') {
+        data = await register({ name, email, password, role });
+      } else {
+        data = await login({ email, password });
+      }
+      // Store for ProfileMenu to read
+      sessionStorage.setItem('mm_role', data.user.role);
+      sessionStorage.setItem('mm_name', data.user.name);
+      sessionStorage.setItem('mm_id', data.user.id);
+      router.push(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+    } catch (err) {
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMode = () => {

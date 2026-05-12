@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logout, getMe } from '@/app/lib/api';
 import styles from './ProfileMenu.module.css';
 
 export default function ProfileMenu() {
@@ -12,8 +13,16 @@ export default function ProfileMenu() {
   const menuRef = useRef(null);
 
   useEffect(() => {
-    setRole(sessionStorage.getItem('mm_role') || 'user');
-    setUsername(sessionStorage.getItem('mm_name') || 'User');
+    // Try API first, fall back to sessionStorage
+    getMe()
+      .then(d => {
+        setRole(d.user.role || 'user');
+        setUsername(d.user.name || 'User');
+      })
+      .catch(() => {
+        setRole(sessionStorage.getItem('mm_role') || 'user');
+        setUsername(sessionStorage.getItem('mm_name') || 'User');
+      });
   }, []);
 
   // Close on outside click
@@ -27,9 +36,11 @@ export default function ProfileMenu() {
 
   const initials = username.slice(0, 2).toUpperCase();
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try { await logout(); } catch {}
     sessionStorage.removeItem('mm_role');
     sessionStorage.removeItem('mm_name');
+    sessionStorage.removeItem('mm_id');
     router.push('/auth');
   };
 

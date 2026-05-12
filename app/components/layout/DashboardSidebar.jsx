@@ -1,5 +1,5 @@
 'use client';
-import styles from '@/app/components/dashboard.module.css';
+import styles from '@/app/components/shared/dashboard.module.css';
 
 const LOGO = (
   <svg width="28" height="28" viewBox="0 0 44 44" fill="none">

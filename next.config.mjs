@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Allow file serving from /uploads for uploaded QP/answer sheets
+  serverExternalPackages: ['mongoose'],
 };
 
 export default nextConfig;

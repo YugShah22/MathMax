@@ -391,13 +391,13 @@
   font-size: 0.73rem; color: rgba(245,245,255,0.3);
 }
 
-/* ── closed paper dims the row ── */
+/* ── closed paper — same style as open, only the badge differs ── */
 .paperRowClosed {
-  opacity: 0.55;
+  opacity: 1;
 }
 .paperRowClosed:hover {
-  border-color: rgba(239,68,68,0.2);
-  background: rgba(239,68,68,0.03);
+  border-color: rgba(109, 40, 217, 0.2);
+  background: rgba(109, 40, 217, 0.04);
 }
 
 /* ── datetime input ── */
@@ -600,7 +600,7 @@
   background: rgba(14,165,233,0.06);
   border: 1px solid rgba(14,165,233,0.18);
 }
-.codeInfoContent {}
+
 .codeInfoLabel {
   font-size: 0.72rem; font-weight: 700;
   color: #67e8f9; text-transform: uppercase; letter-spacing: 0.06em;
@@ -849,7 +849,10 @@
   flex-wrap: wrap;
   transition: border-color 0.2s;
 }
-.reevalRow:hover { border-color: rgba(109,40,217,0.2); }
+.reevalRow:hover { 
+  border-color: rgba(109, 40, 217, 0.2);
+  background: rgba(109, 40, 217, 0.04); 
+}
 .reevalLeft { flex: 1; min-width: 0; }
 .reevalHeader { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
 .reevalReason {
