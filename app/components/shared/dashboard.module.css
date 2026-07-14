@@ -240,10 +240,38 @@
   box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
 }
 
+/* ═══ SELECT (dark-themed dropdown) ═══ */
+.selectInput {
+  padding: 11px 36px 11px 14px;
+  border-radius: 9px;
+  background: rgba(18, 14, 38, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #f5f5ff;
+  font-size: 0.88rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(167,139,250,0.6)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.selectInput:focus {
+  border-color: rgba(109, 40, 217, 0.45);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+}
+.selectInput option {
+  background: #120e26;
+  color: #f5f5ff;
+}
+
 /* ═══ SUBJECT GRID ═══ */
 .subjectGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
 }
 
@@ -270,7 +298,7 @@
 
 .subjectCardBody {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 16px 18px;
 }
@@ -281,6 +309,7 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 1rem;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .subjectInfo { flex: 1; min-width: 0; }
@@ -291,6 +320,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 150px;
 }
 .subjectMeta {
   font-size: 0.75rem;
@@ -376,6 +406,7 @@
   border: 1px solid rgba(109, 40, 217, 0.2);
   padding: 2px 7px;
   border-radius: 5px;
+  white-space: nowrap;
 }
 .copyBtn {
   background: none; border: none; cursor: pointer;

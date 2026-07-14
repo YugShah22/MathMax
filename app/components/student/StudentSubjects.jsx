@@ -15,7 +15,7 @@ const STATUS_STYLE = {
 const BOOK_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
 const PLUS_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
 
-export default function StudentSubjects() {
+export default function StudentSubjects({ onGoToPapers }) {
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [showJoin, setShowJoin]       = useState(false);
@@ -116,13 +116,21 @@ export default function StudentSubjects() {
           </div>
           <div className={styles.subjectGrid} style={{ marginBottom: 28 }}>
             {approved.map(e => (
-              <div key={e.id} className={styles.subjectCard} style={{ cursor: 'default' }}>
+              <div
+                key={e.id}
+                className={styles.subjectCard}
+                style={{ cursor: onGoToPapers ? 'pointer' : 'default' }}
+                onClick={() => onGoToPapers && onGoToPapers({ subjectId: e.subjectId, name: e.subject, color: e.subjectColor })}
+              >
                 <div className={styles.subjectAccent} style={{ background: e.subjectColor }} />
                 <div className={styles.subjectCardBody}>
                   <div className={styles.subjectInitial} style={{ background: e.subjectColor + '1a', color: e.subjectColor }}>{e.subject[0]}</div>
                   <div className={styles.subjectInfo}>
                     <div className={styles.subjectName}>{e.subject}</div>
                     <div className={styles.subjectMeta}>by {e.teacherName}</div>
+                    {onGoToPapers && (
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(167,139,250,0.5)', marginTop: 3 }}>Click to view papers →</div>
+                    )}
                   </div>
                   <Badge label="Enrolled" {...STATUS_STYLE.approved} />
                 </div>

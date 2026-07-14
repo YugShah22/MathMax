@@ -4,8 +4,12 @@
  */
 
 async function request(url, options = {}) {
+  // Read tab-isolated token from sessionStorage (works in browser only)
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('mm_token') : null;
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: { 'Content-Type': 'application/json', ...authHeader, ...options.headers },
     ...options,
   });
   if (!res.ok) {
@@ -45,10 +49,10 @@ export async function register({ name, email, password, role }) {
   });
 }
 
-export async function login({ email, password }) {
+export async function login({ email, password, role }) {
   return request('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, role }),
   });
 }
 
@@ -76,6 +80,13 @@ export async function deleteSubject(id) {
   return request(`/api/subjects/${id}`, { method: 'DELETE' });
 }
 
+export async function updateSubject(id, { name, color }) {
+  return request(`/api/subjects/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name, color }),
+  });
+}
+
 // ── Papers ────────────────────────────────────────────────────────────────
 export async function getPapers(subjectId) {
   return request(`/api/papers?subjectId=${subjectId}`);
@@ -86,6 +97,17 @@ export async function createPaper({ subjectId, title, deadline }) {
     method: 'POST',
     body: JSON.stringify({ subjectId, title, deadline }),
   });
+}
+
+export async function updatePaper(id, { title, deadline }) {
+  return request(`/api/papers/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title, deadline }),
+  });
+}
+
+export async function deletePaper(id) {
+  return request(`/api/papers/${id}`, { method: 'DELETE' });
 }
 
 export async function lookupPaper(code) {

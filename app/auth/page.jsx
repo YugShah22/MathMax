@@ -41,12 +41,14 @@ export default function AuthPage() {
       if (mode === 'register') {
         data = await register({ name, email, password, role });
       } else {
-        data = await login({ email, password });
+        data = await login({ email, password, role });
       }
       // Store for ProfileMenu to read
       sessionStorage.setItem('mm_role', data.user.role);
       sessionStorage.setItem('mm_name', data.user.name);
       sessionStorage.setItem('mm_id', data.user.id);
+      // Store token in sessionStorage (tab-isolated) so each tab has its own session
+      if (data.token) sessionStorage.setItem('mm_token', data.token);
       router.push(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
     } catch (err) {
       setError(err.message || 'Something went wrong');

@@ -8,10 +8,10 @@ import { requireAuth, json, errorJson } from '@/app/lib/auth';
 /** GET /api/papers/deadlines — student: papers only from ENROLLED subjects */
 export async function GET() {
   try {
-    const user = await requireAuth('student');
+    const user = await requireAuth(); // any authenticated user
     await dbConnect();
 
-    // Get subject IDs where student is approved
+    // Get subject IDs where this user is approved
     const enrolledSubjectIds = (
       await Enrollment.find({ studentId: user.id, status: 'approved' }).select('subjectId').lean()
     ).map(e => e.subjectId);
@@ -30,6 +30,7 @@ export async function GET() {
 
         return {
           id: p._id,
+          subjectId: p.subjectId.toString(),
           title: p.title,
           code: p.code,
           deadline: p.deadline ? p.deadline.toISOString() : null,

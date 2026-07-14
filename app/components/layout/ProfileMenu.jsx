@@ -41,6 +41,7 @@ export default function ProfileMenu() {
     sessionStorage.removeItem('mm_role');
     sessionStorage.removeItem('mm_name');
     sessionStorage.removeItem('mm_id');
+    sessionStorage.removeItem('mm_token');
     router.push('/auth');
   };
 

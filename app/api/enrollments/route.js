@@ -83,7 +83,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = await requireAuth('student');
+    const user = await requireAuth(); // any authenticated user can join
     await dbConnect();
 
     const { joinCode } = await req.json();
@@ -91,6 +91,11 @@ export async function POST(req) {
 
     const subject = await Subject.findOne({ joinCode: joinCode.trim().toUpperCase() });
     if (!subject) return errorJson('Invalid join code — no subject found', 404);
+
+    // Prevent the teacher of the subject from joining their own subject
+    if (String(subject.teacherId) === String(user.id)) {
+      return errorJson('You cannot join your own subject', 400);
+    }
 
     // Check if already enrolled or requested
     const existing = await Enrollment.findOne({ subjectId: subject._id, studentId: user.id });

@@ -50,7 +50,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = await requireAuth('student');
+    const user = await requireAuth(); // any authenticated user can submit
     await dbConnect();
 
     const { paperId, filePath } = await req.json();

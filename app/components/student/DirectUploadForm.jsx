@@ -3,6 +3,7 @@ import { useState } from 'react';
 import FileDropZone from '@/app/components/ui/FileDropZone';
 import { PrimaryButton, GhostButton } from '@/app/components/ui/Button';
 import { formatDeadline } from '@/app/lib/deadlineUtils';
+import { uploadFile, createSubmission } from '@/app/lib/api';
 import styles from '@/app/components/shared/dashboard.module.css';
 
 const CLOCK_ICON = (
@@ -12,16 +13,34 @@ const CLOCK_ICON = (
 );
 
 /**
- * Direct upload form — no QP code verification needed.
- * The paper is already known from the deadline click on the home screen.
- *
+ * Direct upload form — student uploads their answer sheet for a paper.
  * Props:
- *   paper: { paper, subject, code, deadline }
+ *   paper: { id, title, subject, subjectColor, code, deadline }
  *   onCancel(): void
  */
 export default function DirectUploadForm({ paper, onCancel }) {
-  const [file, setFile]     = useState(null);
+  const [file, setFile]       = useState(null);
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError]     = useState('');
+
+  const handleSubmit = async () => {
+    if (!file) return;
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Upload the file
+      const { filePath } = await uploadFile(file, 'answer');
+      // 2. Create the submission record
+      await createSubmission({ paperId: paper.id, filePath });
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Submission failed:', err);
+      setError(err.message || 'Upload failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -37,20 +56,25 @@ export default function DirectUploadForm({ paper, onCancel }) {
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f5f5ff', marginBottom: 6 }}>Submitted for evaluation</div>
-          <div style={{ fontSize: '0.82rem', color: 'rgba(245,245,255,0.4)' }}>{paper.paper} · {paper.subject}</div>
+          <div style={{ fontSize: '0.82rem', color: 'rgba(245,245,255,0.4)' }}>{paper.title} · {paper.subject}</div>
           <div style={{ fontSize: '0.78rem', color: 'rgba(245,245,255,0.3)', marginTop: 4 }}>{file?.name}</div>
+          <div style={{ fontSize: '0.75rem', color: 'rgba(245,245,255,0.2)', marginTop: 8 }}>
+            Your teacher will grade it and you'll see your result in the Results tab.
+          </div>
         </div>
-        <GhostButton onClick={onCancel}>Back to home</GhostButton>
+        <GhostButton onClick={onCancel}>Back to Papers</GhostButton>
       </div>
     );
   }
+
+  const color = paper.subjectColor || '#7c3aed';
 
   return (
     <div className={styles.fadeIn}>
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Upload Answer Sheet</h1>
-          <p className={styles.pageSubtitle}>{paper.paper} · {paper.subject}</p>
+          <p className={styles.pageSubtitle}>{paper.title} · {paper.subject}</p>
         </div>
       </div>
 
@@ -59,20 +83,20 @@ export default function DirectUploadForm({ paper, onCancel }) {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 14,
           padding: '14px 16px', borderRadius: 10,
-          background: 'rgba(109,40,217,0.07)', border: '1px solid rgba(109,40,217,0.18)',
+          background: `${color}12`, border: `1px solid ${color}30`,
           marginBottom: 4,
         }}>
           <div style={{
             width: 38, height: 38, borderRadius: 10,
-            background: 'rgba(109,40,217,0.15)', border: '1px solid rgba(109,40,217,0.25)',
+            background: `${color}20`, border: `1px solid ${color}40`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
             </svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f5f5ff' }}>{paper.paper}</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f5f5ff' }}>{paper.title}</div>
             <div style={{ fontSize: '0.75rem', color: 'rgba(245,245,255,0.35)', marginTop: 2 }}>{paper.subject}</div>
           </div>
           {paper.deadline && (
@@ -82,19 +106,25 @@ export default function DirectUploadForm({ paper, onCancel }) {
           )}
         </div>
 
-        <div style={{ fontSize: '0.75rem', color: 'rgba(245,245,255,0.25)', marginBottom: 20 }}>
-          Code: <span style={{ fontFamily: "'JetBrains Mono',monospace", color: 'rgba(167,139,250,0.6)' }}>{paper.code}</span>
-        </div>
+        {paper.code && (
+          <div style={{ fontSize: '0.75rem', color: 'rgba(245,245,255,0.25)', marginBottom: 20 }}>
+            Code: <span style={{ fontFamily: "'JetBrains Mono',monospace", color: 'rgba(167,139,250,0.6)' }}>{paper.code}</span>
+          </div>
+        )}
 
         <div className={styles.formSection}>
           <label className={styles.formLabel}>Your answer sheet</label>
           <FileDropZone file={file} onFile={setFile} accept=".pdf,.jpg,.jpeg,.png" />
         </div>
 
+        {error && (
+          <p style={{ color: '#ef4444', fontSize: '0.82rem', marginTop: 8, marginBottom: 0 }}>{error}</p>
+        )}
+
         <div className={styles.formActions}>
-          <GhostButton onClick={onCancel}>Cancel</GhostButton>
-          <PrimaryButton disabled={!file} onClick={() => setSubmitted(true)}>
-            Submit for evaluation
+          <GhostButton onClick={onCancel} disabled={loading}>Cancel</GhostButton>
+          <PrimaryButton disabled={!file || loading} onClick={handleSubmit}>
+            {loading ? 'Uploading…' : 'Submit for evaluation'}
           </PrimaryButton>
         </div>
       </div>

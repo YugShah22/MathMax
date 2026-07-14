@@ -1,11 +1,39 @@
 'use client';
+import { useState, useEffect } from 'react';
+import { getResults } from '@/app/lib/api';
 import EmptyState from '@/app/components/ui/EmptyState';
 import { scoreColor } from '@/app/lib/deadlineUtils';
 import styles from '@/app/components/shared/dashboard.module.css';
 
 const CHART_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
 
-export default function ResultsList({ results, onView }) {
+export default function ResultsList({ onView }) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getResults();
+        setResults(data.results || []);
+      } catch (err) {
+        console.error('Failed to load results:', err);
+        setError(err.message || 'Failed to load results');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return <div className={styles.fadeIn} style={{ color: 'rgba(245,245,255,0.3)', padding: 40, textAlign: 'center' }}>Loading results…</div>;
+  }
+
+  if (error) {
+    return <div className={styles.fadeIn} style={{ color: '#ef4444', padding: 40, textAlign: 'center' }}>Error: {error}</div>;
+  }
+
   return (
     <div className={styles.fadeIn}>
       <div className={styles.pageHeader}>

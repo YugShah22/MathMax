@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_dev_secret';
 
@@ -22,10 +23,22 @@ export function verifyToken(token) {
 }
 
 /**
- * Get the current authenticated user from the cookie.
+ * Get the current authenticated user.
+ * Checks Authorization header first (tab-isolated, for multi-session dev),
+ * then falls back to the shared mm_token cookie.
  * Returns { id, email, role, name } or null.
  */
 export async function getUser() {
+  // 1. Try Bearer token from Authorization header (tab-isolated sessionStorage)
+  const headerStore = await headers();
+  const authHeader = headerStore.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    const user = verifyToken(token);
+    if (user) return user;
+  }
+
+  // 2. Fall back to HTTP-only cookie
   const cookieStore = await cookies();
   const token = cookieStore.get('mm_token')?.value;
   if (!token) return null;

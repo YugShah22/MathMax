@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 export async function POST(req) {
   try {
     await dbConnect();
-    const { email, password } = await req.json();
+    const { email, password, role } = await req.json();
 
     if (!email || !password) {
       return errorJson('Email and password are required');
@@ -23,6 +23,11 @@ export async function POST(req) {
       return errorJson('Invalid email or password', 401);
     }
 
+    // Role guard: if the user selected Teacher but logged in with a Student account (or vice versa)
+    if (role && user.role !== role) {
+      return errorJson(`This account is registered as a ${user.role}. Please sign in under the correct role.`, 403);
+    }
+
     const token = signToken(user);
     const cookieStore = await cookies();
     cookieStore.set('mm_token', token, {
@@ -34,6 +39,7 @@ export async function POST(req) {
     });
 
     return json({
+      token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (err) {

@@ -150,7 +150,7 @@ export default function TeacherDashboard() {
 
         <div className={styles.content}>
           {view === 'subjects'    && <SubjectGrid subjects={subjects} onSetSubjects={setSubjects} onSelect={selectSubject} />}
-          {view === 'papers'      && selSubject && <PaperList papers={papers} subject={selSubject}
+          {view === 'papers'      && selSubject && <PaperList papers={papers} setPapers={setPapers} subject={selSubject}
             onUploadQP={() => nav('upload-qp', selSubject, null)}
             onSheets={p   => nav('sheets',    selSubject, p)}
             onAnalytics={p => nav('analytics', selSubject, p)}

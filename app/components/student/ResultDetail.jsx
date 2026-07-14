@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { scoreColor } from '@/app/lib/deadlineUtils';
 import { Q_BREAKDOWN } from '@/app/lib/mockData';
+import { createReevaluation } from '@/app/lib/api';
 import { GhostButton, SmPurpleButton, PrimaryButton } from '@/app/components/ui/Button';
 import { SubjectBadge } from '@/app/components/ui/Badge';
 import styles from '@/app/components/shared/dashboard.module.css';
@@ -14,15 +15,36 @@ export default function ResultDetail({ result, onBack }) {
   const [reevalReason, setReevalReason] = useState('');
   const [reevalSent, setReevalSent] = useState(false);
   const [showReeval, setShowReeval] = useState(false);
+  const [reevalSubmitting, setReevalSubmitting] = useState(false);
+  const [reevalError, setReevalError]           = useState('');
 
-  const color    = SUBJECT_COLORS[result.subject] || '#6d28d9';
+  const color    = result.subjectColor || SUBJECT_COLORS[result.subject] || '#6d28d9';
   const scoreCol = scoreColor(result.score);
-  const total    = Q_BREAKDOWN.reduce((a, b) => a[1] + b[1], [0, 0]);
+  
+  const breakdown = result.qBreakdown && result.qBreakdown.length > 0
+    ? result.qBreakdown.map(q => [q.got, q.full])
+    : Q_BREAKDOWN;
 
-  const submitReeval = () => {
+  const total = breakdown.reduce((acc, b) => acc + b[1], 0);
+
+  const submitReeval = async () => {
     if (!reevalQ || !reevalReason.trim()) return;
-    setReevalSent(true);
-    setShowReeval(false);
+    setReevalSubmitting(true);
+    setReevalError('');
+    try {
+      await createReevaluation({
+        submissionId: result.id,
+        question: reevalQ,
+        reason: reevalReason.trim(),
+      });
+      setReevalSent(true);
+      setShowReeval(false);
+    } catch (err) {
+      console.error('Failed to submit re-evaluation request:', err);
+      setReevalError(err.message || 'Failed to submit request');
+    } finally {
+      setReevalSubmitting(false);
+    }
   };
 
   return (
@@ -35,7 +57,7 @@ export default function ResultDetail({ result, onBack }) {
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '3rem', fontWeight: 900, color: scoreCol, lineHeight: 1 }}>{result.score}</div>
-          <div style={{ fontSize: '0.78rem', color: 'rgba(245,245,255,0.3)', marginTop: 2 }}>out of 100</div>
+          <div style={{ fontSize: '0.78rem', color: 'rgba(245,245,255,0.3)', marginTop: 2 }}>out of {total || 100}</div>
         </div>
       </div>
 
@@ -43,17 +65,17 @@ export default function ResultDetail({ result, onBack }) {
       <div className={styles.feedbackBox} style={{ marginBottom: 24 }}>
         <div className={styles.feedbackLabel}>AI Feedback</div>
         <div className={styles.feedbackText}>
-          Your paper shows a solid understanding of core concepts. Question-wise, Q1–Q3 were excellent. In Q4 and Q7, while the approach was correct, minor computation errors led to partial marks. Focus on step-by-step verification before finalising answers.
+          {result.feedback || "Your paper shows a solid understanding of core concepts. Question-wise, Q1–Q3 were excellent. In Q4 and Q7, while the approach was correct, minor computation errors led to partial marks. Focus on step-by-step verification before finalising answers."}
         </div>
       </div>
 
       {/* Question breakdown */}
       <div className={styles.sectionTitle} style={{ marginBottom: 12 }}>Question breakdown</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
-        {Q_BREAKDOWN.map(([got, full], i) => (
+        {breakdown.map(([got, full], i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: 'rgba(245,245,255,0.35)', width: 28 }}>Q{i+1}</span>
-            <span style={{ fontSize: '0.78rem', color: 'rgba(245,245,255,0.3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{QUESTIONS[i]}</span>
+            <span style={{ fontSize: '0.78rem', color: 'rgba(245,245,255,0.3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{QUESTIONS[i] || 'Question'}</span>
             <div className={styles.scoreBar}>
               <div className={styles.scoreBarTrack} style={{ width: 80 }}>
                 <div className={styles.scoreBarFill} style={{ width: `${(got/full)*100}%`, background: scoreColor((got/full)*100) }}/>
@@ -76,11 +98,16 @@ export default function ResultDetail({ result, onBack }) {
         ) : (
           <div className={styles.formCard} style={{ marginBottom: 8 }}>
             <div className={styles.sectionTitle}>Request re-evaluation</div>
+            {reevalError && (
+              <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: 12 }}>
+                {reevalError}
+              </div>
+            )}
             <div className={styles.formSection}>
               <label className={styles.formLabel}>Question</label>
-              <select className={styles.textInput} value={reevalQ} onChange={e => setReevalQ(e.target.value)} style={{ width: '100%' }}>
+              <select className={styles.selectInput} value={reevalQ} onChange={e => setReevalQ(e.target.value)} style={{ width: '100%' }}>
                 <option value="">Select a question</option>
-                {Q_BREAKDOWN.map((_, i) => <option key={i} value={`Q${i+1}`}>Q{i+1}</option>)}
+                {breakdown.map((_, i) => <option key={i} value={`Q${i+1}`}>Q{i+1}</option>)}
               </select>
             </div>
             <div className={styles.formSection}>
@@ -89,8 +116,10 @@ export default function ResultDetail({ result, onBack }) {
                 value={reevalReason} onChange={e => setReevalReason(e.target.value)} style={{ width: '100%', resize: 'vertical' }} />
             </div>
             <div className={styles.formActions}>
-              <GhostButton onClick={() => setShowReeval(false)}>Cancel</GhostButton>
-              <PrimaryButton disabled={!reevalQ || !reevalReason.trim()} onClick={submitReeval}>Submit request</PrimaryButton>
+              <GhostButton onClick={() => { setShowReeval(false); setReevalError(''); }}>Cancel</GhostButton>
+              <PrimaryButton disabled={!reevalQ || !reevalReason.trim() || reevalSubmitting} onClick={submitReeval}>
+                {reevalSubmitting ? 'Submitting…' : 'Submit request'}
+              </PrimaryButton>
             </div>
           </div>
         )

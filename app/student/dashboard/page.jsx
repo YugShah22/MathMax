@@ -61,10 +61,11 @@ const NAV_ITEMS = [
 export default function StudentDashboard() {
   const router = useRouter();
 
-  const [view,      setView]      = useState('home');
-  const [selPaper,  setSelPaper]  = useState(null);
-  const [selResult, setSelResult] = useState(null);
-  const [username,  setUsername]  = useState('Student');
+  const [view,        setView]        = useState('home');
+  const [selPaper,    setSelPaper]    = useState(null);
+  const [selResult,   setSelResult]   = useState(null);
+  const [username,    setUsername]    = useState('Student');
+  const [filterSubject, setFilterSubject] = useState(null); // { subjectId, name, color }
 
   useEffect(() => {
     setUsername(sessionStorage.getItem('mm_name') || 'Student');
@@ -72,19 +73,23 @@ export default function StudentDashboard() {
 
   useNavHistory({ view: 'home' }, (state) => {
     setView(state.view || 'home');
-    setSelPaper(state.paper   ?? null);
-    setSelResult(state.result ?? null);
+    setSelPaper(state.paper          ?? null);
+    setSelResult(state.result        ?? null);
+    setFilterSubject(state.filterSubject ?? null);
   });
 
   const nav = (v, opts = {}) => {
     pushHistory({ view: v, ...opts });
     setView(v);
-    if ('paper'  in opts) setSelPaper(opts.paper);
-    if ('result' in opts) setSelResult(opts.result);
+    if ('paper'         in opts) setSelPaper(opts.paper);
+    if ('result'        in opts) setSelResult(opts.result);
+    if ('filterSubject' in opts) setFilterSubject(opts.filterSubject);
   };
 
-  const goUpload = (paper) => nav('direct-upload', { paper });
+  const goUpload = (paper)  => nav('direct-upload', { paper });
   const goResult = (result) => nav('result-detail', { result });
+  // From subject card — navigate to Papers with a subject filter
+  const goSubjectPapers = (subj) => nav('papers', { filterSubject: subj ?? null });
 
   // ── breadcrumb ──
   const breadcrumb = (
@@ -134,7 +139,11 @@ export default function StudentDashboard() {
       <DashboardSidebar
         items={NAV_ITEMS}
         activeKey={sidebarKey}
-        onNav={key => nav(key)}
+        onNav={key => {
+          // Clicking Papers in sidebar always shows ALL papers (no filter)
+          if (key === 'papers') setFilterSubject(null);
+          nav(key);
+        }}
         onBrandClick={() => router.push('/')}
       />
 
@@ -145,10 +154,10 @@ export default function StudentDashboard() {
 
           {view === 'home' && <StudentHome username={username} />}
 
-          {view === 'subjects' && <StudentSubjects />}
+          {view === 'subjects' && <StudentSubjects onGoToPapers={goSubjectPapers} />}
 
           {view === 'papers' && (
-            <PapersView onUpload={goUpload} onResult={goResult} />
+            <PapersView onUpload={goUpload} onResult={goResult} filterSubject={filterSubject} />
           )}
 
           {view === 'direct-upload' && selPaper && (

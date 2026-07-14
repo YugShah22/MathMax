@@ -15,10 +15,28 @@ export async function GET() {
 
     const withCounts = await Promise.all(
       subjects.map(async (s) => {
-        const papers     = await Paper.countDocuments({ subjectId: s._id });
-        const enrolled   = await Enrollment.countDocuments({ subjectId: s._id, status: 'approved' });
-        const pending    = await Enrollment.countDocuments({ subjectId: s._id, status: 'pending' });
-        return { ...s, id: s._id.toString(), papers, enrolled, pendingRequests: pending };
+        // Auto-generate joinCode for subjects created before the field was added.
+        // Use native driver to bypass Mongoose strict-mode schema cache in dev.
+        let joinCode = s.joinCode;
+        if (!joinCode) {
+          let candidate = generateJoinCode(s.name);
+          let attempts = 0;
+          while (await Subject.findOne({ joinCode: candidate, _id: { $ne: s._id } }) && attempts < 20) {
+            candidate = generateJoinCode(s.name);
+            attempts++;
+          }
+          // Native driver update — ignores schema strictness
+          await Subject.collection.updateOne(
+            { _id: s._id },
+            { $set: { joinCode: candidate } }
+          );
+          joinCode = candidate;
+        }
+
+        const papers   = await Paper.countDocuments({ subjectId: s._id });
+        const enrolled = await Enrollment.countDocuments({ subjectId: s._id, status: 'approved' });
+        const pending  = await Enrollment.countDocuments({ subjectId: s._id, status: 'pending' });
+        return { ...s, id: s._id.toString(), joinCode, papers, enrolled, pendingRequests: pending };
       })
     );
 

@@ -7,7 +7,7 @@ import { requireAuth, json, errorJson } from '@/app/lib/auth';
 /** GET /api/results — student: all their graded results */
 export async function GET() {
   try {
-    const user = await requireAuth('student');
+    const user = await requireAuth(); // any authenticated user
     await dbConnect();
 
     const submissions = await Submission.find({ studentId: user.id, status: 'graded' })
