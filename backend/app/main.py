@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pymongo.errors import PyMongoError
 
-from app.api.routes import auth, health
+from app.api.routes import auth, health, examinations, questions, answer_keys, rubrics, documents
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.client import close_mongo_connection, connect_to_mongo, get_database
@@ -99,6 +99,11 @@ def create_app() -> FastAPI:
     prefix = settings.API_V1_PREFIX
     app.include_router(health.router, prefix=prefix)
     app.include_router(auth.router, prefix=prefix)
+    app.include_router(examinations.router, prefix=prefix)
+    app.include_router(questions.router, prefix=prefix)
+    app.include_router(answer_keys.router, prefix=prefix)
+    app.include_router(rubrics.router, prefix=prefix)
+    app.include_router(documents.router, prefix=prefix)
 
     return app
 

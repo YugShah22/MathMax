@@ -14,7 +14,13 @@ async function request(url, options = {}) {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Request failed (${res.status})`);
+    let msg = data.detail || data.error || `Request failed (${res.status})`;
+    if (Array.isArray(msg)) {
+      msg = msg.map(m => m.msg || m.message || JSON.stringify(m)).join(', ');
+    } else if (typeof msg === 'object') {
+      msg = JSON.stringify(msg);
+    }
+    throw new Error(msg);
   }
   // CSV returns text
   if (res.headers.get('content-type')?.includes('text/csv')) {
@@ -204,4 +210,202 @@ export async function resolveEnrollment(id, status) {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
+}
+
+// ── Phase 2: Examinations ──────────────────────────────────────────────────
+export async function getExaminationStats() {
+  return request('/api/v1/examinations/dashboard-stats');
+}
+
+export async function getExaminations({ status, search, page = 1, pageSize = 20 } = {}) {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  if (search) params.append('search', search);
+  if (page) params.append('page', page);
+  if (pageSize) params.append('page_size', pageSize);
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return request(`/api/v1/examinations${q}`);
+}
+
+export async function getExamination(id) {
+  return request(`/api/v1/examinations/${id}`);
+}
+
+export async function createExamination(data) {
+  return request('/api/v1/examinations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateExamination(id, data) {
+  return request(`/api/v1/examinations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteExamination(id) {
+  return request(`/api/v1/examinations/${id}`, { method: 'DELETE' });
+}
+
+export async function duplicateExamination(id) {
+  return request(`/api/v1/examinations/${id}/duplicate`, { method: 'POST' });
+}
+
+export async function publishExamination(id) {
+  return request(`/api/v1/examinations/${id}/publish`, { method: 'POST' });
+}
+
+export async function archiveExamination(id) {
+  return request(`/api/v1/examinations/${id}/archive`, { method: 'POST' });
+}
+
+export async function checkPublishReadiness(id) {
+  return request(`/api/v1/examinations/${id}/publish-check`);
+}
+
+// ── Phase 2: Questions ───────────────────────────────────────────────────────
+export async function getQuestions(examinationId) {
+  return request(`/api/v1/examinations/${examinationId}/questions`);
+}
+
+export async function getQuestion(id) {
+  return request(`/api/v1/questions/${id}`);
+}
+
+export async function addQuestion(examinationId, data) {
+  return request(`/api/v1/examinations/${examinationId}/questions`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateQuestion(id, data) {
+  return request(`/api/v1/questions/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteQuestion(id) {
+  return request(`/api/v1/questions/${id}`, { method: 'DELETE' });
+}
+
+export async function reorderQuestions(examinationId, questions) {
+  return request(`/api/v1/examinations/${examinationId}/questions/reorder`, {
+    method: 'POST',
+    body: JSON.stringify({ questions }),
+  });
+}
+
+export async function duplicateQuestion(id, newQuestionNumber) {
+  return request(`/api/v1/questions/${id}/duplicate`, {
+    method: 'POST',
+    body: JSON.stringify({ new_question_number: newQuestionNumber }),
+  });
+}
+
+// ── Phase 2: Answer Keys ────────────────────────────────────────────────────
+export async function getAnswerKeyForQuestion(questionId) {
+  return request(`/api/v1/questions/${questionId}/answer-key`);
+}
+
+export async function createOrUpdateAnswerKey(questionId, data) {
+  return request(`/api/v1/questions/${questionId}/answer-key`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAnswerKeysForExam(examinationId) {
+  return request(`/api/v1/examinations/${examinationId}/answer-keys`);
+}
+
+export async function updateAnswerKey(answerKeyId, data) {
+  return request(`/api/v1/answer-keys/${answerKeyId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+// ── Phase 2: Rubrics ─────────────────────────────────────────────────────────
+export async function getRubricsForQuestion(questionId) {
+  return request(`/api/v1/questions/${questionId}/rubrics`);
+}
+
+export async function getRubric(id) {
+  return request(`/api/v1/rubrics/${id}`);
+}
+
+export async function createRubric(questionId, data) {
+  return request(`/api/v1/questions/${questionId}/rubrics`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateRubric(id, data) {
+  return request(`/api/v1/rubrics/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function activateRubric(id) {
+  return request(`/api/v1/rubrics/${id}/activate`, { method: 'POST' });
+}
+
+export async function archiveRubric(id) {
+  return request(`/api/v1/rubrics/${id}/archive`, { method: 'POST' });
+}
+
+export async function duplicateRubric(id, targetQuestionId) {
+  return request(`/api/v1/rubrics/${id}/duplicate`, {
+    method: 'POST',
+    body: JSON.stringify({ target_question_id: targetQuestionId }),
+  });
+}
+
+// ── Phase 2: Documents ──────────────────────────────────────────────────────
+export async function uploadQuestionPaperDocument(examinationId, file) {
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('mm_token') : null;
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`/api/v1/examinations/${examinationId}/question-paper`, {
+    method: 'POST',
+    headers: { ...authHeader },
+    body: form,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || data.error || 'Upload failed');
+  }
+  return res.json();
+}
+
+export async function uploadAnswerKeyDocument(examinationId, file) {
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('mm_token') : null;
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`/api/v1/examinations/${examinationId}/answer-key-file`, {
+    method: 'POST',
+    headers: { ...authHeader },
+    body: form,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || data.error || 'Upload failed');
+  }
+  return res.json();
+}
+
+export async function getDocument(fileId) {
+  return request(`/api/v1/documents/${fileId}`);
+}
+
+export async function deleteDocument(fileId) {
+  return request(`/api/v1/documents/${fileId}`, { method: 'DELETE' });
 }

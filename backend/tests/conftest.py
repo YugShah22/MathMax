@@ -104,9 +104,21 @@ def client(mock_repo: MockUserRepository) -> TestClient:
     - Overrides get_user_repo dependency to use MockUserRepository.
     """
     from app.api.dependencies.auth import get_user_repo
+    from app.api.dependencies.phase2 import (
+        get_exam_repo, get_question_repo, get_answer_key_repo, get_rubric_repo, get_document_repo,
+    )
+    from tests.conftest_phase2 import (
+        MockExaminationRepository, MockQuestionRepository,
+        MockAnswerKeyRepository, MockRubricRepository, MockDocumentRepository,
+    )
     from app.main import app
 
     app.dependency_overrides[get_user_repo] = lambda: mock_repo
+    app.dependency_overrides[get_exam_repo] = lambda: MockExaminationRepository()
+    app.dependency_overrides[get_question_repo] = lambda: MockQuestionRepository()
+    app.dependency_overrides[get_answer_key_repo] = lambda: MockAnswerKeyRepository()
+    app.dependency_overrides[get_rubric_repo] = lambda: MockRubricRepository()
+    app.dependency_overrides[get_document_repo] = lambda: MockDocumentRepository()
 
     with (
         patch("app.main.connect_to_mongo"),
