@@ -81,7 +81,7 @@ function AssignmentCard({ item, onClick, submitted }) {
           fontSize: '0.9rem', fontWeight: 700,
           color: submitted ? 'rgba(245,245,255,0.6)' : '#f5f5ff',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          textDecoration: submitted && item.submissionStatus === 'graded' ? 'line-through' : 'none',
+          textDecoration: submitted && item.submissionStatus === 'graded' ? 'none': 'none',
         }}>
           {item.title}
         </div>

@@ -17,7 +17,8 @@ export async function GET(req) {
     if (!paper) return errorJson('Paper not found', 404);
 
     const subs = await Submission.find({ paperId, status: 'graded' })
-      .select('score')
+      .populate('studentId', 'name email')
+      .select('score studentId')
       .lean();
 
     if (subs.length === 0) {
@@ -28,14 +29,25 @@ export async function GET(req) {
         highest: 0,
         lowest: 0,
         scores: [],
+        students: [],
       });
     }
 
-    const scores       = subs.map(s => s.score);
-    const avg          = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    const passRate     = Math.round((scores.filter(s => s >= 40).length / scores.length) * 100);
-    const highest      = Math.max(...scores);
-    const lowest       = Math.min(...scores);
+    const scores   = subs.map(s => s.score);
+    const avg      = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const passRate = Math.round((scores.filter(s => s >= 40).length / scores.length) * 100);
+    const highest  = Math.max(...scores);
+    const lowest   = Math.min(...scores);
+
+    // Build ranked student list (sorted by score desc)
+    const students = subs
+      .map(s => ({
+        name:  s.studentId?.name  || 'Unknown',
+        email: s.studentId?.email || '',
+        score: s.score,
+      }))
+      .sort((a, b) => b.score - a.score)
+      .map((s, i) => ({ ...s, rank: i + 1 }));
 
     return json({
       totalSubmissions: scores.length,
@@ -44,6 +56,7 @@ export async function GET(req) {
       highest,
       lowest,
       scores,
+      students,
     });
   } catch (err) {
     if (err instanceof Response) return err;
