@@ -47,27 +47,50 @@ export async function uploadFile(file, type = 'general') {
   return res.json();
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────
+// ── Auth — all calls routed to FastAPI via /api/v1/auth ──────────────────
+// Phase 3.1: FastAPI is the single authentication authority.
+// The Next.js rewrite proxy forwards /api/v1/* to http://127.0.0.1:8000/api/v1/*.
+
 export async function register({ name, email, password, role }) {
-  return request('/api/auth/register', {
+  // FastAPI: POST /api/v1/auth/register → { access_token, token_type, user }
+  const data = await request('/api/v1/auth/register', {
     method: 'POST',
     body: JSON.stringify({ name, email, password, role }),
   });
+  // Normalise to the shape the rest of the app expects: { token, user }
+  return { token: data.access_token, user: data.user };
 }
 
 export async function login({ email, password, role }) {
-  return request('/api/auth/login', {
+  // FastAPI: POST /api/v1/auth/login → { access_token, token_type, user }
+  const data = await request('/api/v1/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password, role }),
+    body: JSON.stringify({ email, password }),
   });
+  // Validate role on the client side (role comes from the DB via FastAPI, not the request)
+  if (role && data.user.role !== role) {
+    throw new Error(
+      `This account is registered as a ${data.user.role}. Please sign in under the correct role.`
+    );
+  }
+  // Normalise to the shape the rest of the app expects: { token, user }
+  return { token: data.access_token, user: data.user };
 }
 
 export async function logout() {
-  return request('/api/auth/logout', { method: 'POST' });
+  // Clear sessionStorage locally; no server-side session to invalidate for stateless JWT.
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('mm_token');
+    sessionStorage.removeItem('mm_role');
+    sessionStorage.removeItem('mm_name');
+    sessionStorage.removeItem('mm_id');
+  }
+  return { ok: true };
 }
 
 export async function getMe() {
-  return request('/api/auth/me');
+  // FastAPI: GET /api/v1/auth/me → { user: { id, name, email, role, ... } }
+  return request('/api/v1/auth/me');
 }
 
 // ── Subjects (teacher) ───────────────────────────────────────────────────

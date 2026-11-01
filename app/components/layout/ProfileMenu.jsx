@@ -42,6 +42,8 @@ export default function ProfileMenu() {
     sessionStorage.removeItem('mm_name');
     sessionStorage.removeItem('mm_id');
     sessionStorage.removeItem('mm_token');
+    // Clear the middleware auth-hint cookie so the Edge guard redirects visitors.
+    document.cookie = 'mm_auth_hint=; path=/; SameSite=Lax; max-age=0';
     router.push('/auth');
   };
 

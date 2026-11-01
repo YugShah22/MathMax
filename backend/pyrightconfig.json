@@ -1,0 +1,14 @@
+{
+  "include": [
+    "."
+  ],
+  "pythonPath": "C:/Python313/python.exe",
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Windows",
+  "extraPaths": [
+    ".",
+    "C:/Users/YUG SHAH/AppData/Roaming/Python/Python313/site-packages"
+  ],
+  "reportMissingTypeStubs": false
+}
+

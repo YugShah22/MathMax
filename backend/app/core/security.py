@@ -13,8 +13,17 @@ from app.core.config import get_settings
 
 # ── Password hashing ─────────────────────────────────────────────────────────
 # Using bcrypt directly (>=4.0) to avoid passlib incompatibility with bcrypt 5.x.
+#
+# Work factor: production uses 12 rounds (~300 ms/hash).
+# In the "test" ENVIRONMENT the factor is reduced to 4 so the full test suite
+# completes in a reasonable time without compromising correctness — the output
+# is still a valid bcrypt hash that verify_password() can check.
 
-_BCRYPT_ROUNDS = 12
+import os as _os
+
+_BCRYPT_ROUNDS: int = (
+    4 if _os.environ.get("ENVIRONMENT") == "test" else 12
+)
 
 
 def hash_password(plain: str) -> str:

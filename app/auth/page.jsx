@@ -33,7 +33,9 @@ export default function AuthPage() {
     e.preventDefault();
     if (!email || !password) { setError('Email and password are required.'); return; }
     if (mode === 'register' && !name) { setError('Name is required.'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (mode === 'register' && !/\d/.test(password)) { setError('Password must contain at least one digit.'); return; }
+    if (mode === 'register' && !/[a-zA-Z]/.test(password)) { setError('Password must contain at least one letter.'); return; }
     setLoading(true);
     setError('');
     try {
@@ -49,6 +51,10 @@ export default function AuthPage() {
       sessionStorage.setItem('mm_id', data.user.id);
       // Store token in sessionStorage (tab-isolated) so each tab has its own session
       if (data.token) sessionStorage.setItem('mm_token', data.token);
+      // Set a lightweight browser cookie so Next.js middleware can guard protected
+      // routes before the page bundle loads (avoids dashboard flash for visitors).
+      // This cookie carries NO secret — the actual JWT stays in sessionStorage.
+      document.cookie = 'mm_auth_hint=1; path=/; SameSite=Lax; max-age=604800';
       router.push(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
     } catch (err) {
       setError(err.message || 'Something went wrong');

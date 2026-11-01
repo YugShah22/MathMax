@@ -1,0 +1,8 @@
+{
+  "python.defaultInterpreterPath": "C:\\Python313\\python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend",
+    "C:/Users/YUG SHAH/AppData/Roaming/Python/Python313/site-packages"
+  ]
+}
+

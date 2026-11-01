@@ -2,21 +2,26 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { headers } from 'next/headers';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_dev_secret';
+const JWT_SECRET = process.env.JWT_SECRET_KEY || process.env.JWT_SECRET || 'fallback_dev_secret';
 
-/** Sign a JWT for a user. */
+/** Sign a JWT for a user. Standardizes on RFC 7519 'sub' claim. */
 export function signToken(user) {
+  const userId = user._id ? user._id.toString() : user.id;
   return jwt.sign(
-    { id: user._id.toString(), email: user.email, role: user.role, name: user.name },
+    { sub: userId, id: userId, email: user.email, role: user.role, name: user.name },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
 }
 
-/** Verify and decode a JWT. Returns payload or null. */
+/** Verify and decode a JWT. Returns payload or null. Normalizes sub and id. */
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload && payload.sub && !payload.id) {
+      payload.id = payload.sub;
+    }
+    return payload;
   } catch {
     return null;
   }
