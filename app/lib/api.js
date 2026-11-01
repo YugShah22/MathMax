@@ -409,3 +409,66 @@ export async function getDocument(fileId) {
 export async function deleteDocument(fileId) {
   return request(`/api/v1/documents/${fileId}`, { method: 'DELETE' });
 }
+
+// ── Phase 3: Document Ingestion & Answer Sheets ─────────────────────────────
+
+export async function uploadAnswerSheet(examinationId, file, options = {}) {
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('mm_token') : null;
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const form = new FormData();
+  form.append('file', file);
+  if (options.studentId) form.append('student_id', options.studentId);
+  if (options.submissionId) form.append('submission_id', options.submissionId);
+
+  const res = await fetch(`/api/v1/examinations/${examinationId}/answer-sheets`, {
+    method: 'POST',
+    headers: { ...authHeader },
+    body: form,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    let msg = data.detail || data.error || 'Upload failed';
+    if (Array.isArray(msg)) {
+      msg = msg.map(m => m.msg || m.message || JSON.stringify(m)).join(', ');
+    } else if (typeof msg === 'object') {
+      msg = JSON.stringify(msg);
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function getExaminationAnswerSheets(examinationId, page = 1, pageSize = 50) {
+  return request(`/api/v1/examinations/${examinationId}/answer-sheets?page=${page}&page_size=${pageSize}`);
+}
+
+export async function getMyUploadedDocuments(examinationId = null, page = 1, pageSize = 50) {
+  const query = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+  if (examinationId) query.set('examination_id', examinationId);
+  return request(`/api/v1/students/me/documents?${query.toString()}`);
+}
+
+export async function getDocumentPages(fileId) {
+  return request(`/api/v1/documents/${fileId}/pages`);
+}
+
+export async function getDocumentPage(fileId, pageId) {
+  return request(`/api/v1/documents/${fileId}/pages/${pageId}`);
+}
+
+export async function getDocumentProcessingStatus(fileId) {
+  return request(`/api/v1/documents/${fileId}/processing-status`);
+}
+
+export async function retryDocumentProcessing(fileId) {
+  return request(`/api/v1/documents/${fileId}/retry`, { method: 'POST' });
+}
+
+export function getDocumentPageFileUrl(fileId, pageId) {
+  return `/api/v1/documents/${fileId}/pages/${pageId}/file`;
+}
+
+export function getDocumentFileUrl(fileId) {
+  return `/api/v1/documents/${fileId}/file`;
+}
+

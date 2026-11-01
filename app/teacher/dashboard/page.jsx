@@ -8,6 +8,7 @@ import ExaminationDashboard from '@/app/components/teacher/examinations/Examinat
 import ExaminationForm      from '@/app/components/teacher/examinations/ExaminationForm';
 import QuestionManager      from '@/app/components/teacher/examinations/QuestionManager';
 import ExaminationPreview   from '@/app/components/teacher/examinations/ExaminationPreview';
+import AnswerSheetsViewer   from '@/app/components/teacher/examinations/AnswerSheetsViewer';
 import DashboardSidebar   from '@/app/components/layout/DashboardSidebar';
 import DashboardTopBar    from '@/app/components/layout/DashboardTopBar';
 import SubjectGrid        from '@/app/components/teacher/SubjectGrid';
@@ -121,7 +122,7 @@ export default function TeacherDashboard() {
     showToast(`Paper "${newPaper.title}" created — code: ${newPaper.code}`);
   };
 
-  const isExamView = ['examinations','create-exam','edit-exam','manage-questions','preview-exam'].includes(view);
+  const isExamView = ['examinations','create-exam','edit-exam','manage-questions','preview-exam','answer-sheets'].includes(view);
   const isSubjectView = ['subjects','papers','upload-qp','sheets','sheet-detail','upload-ans','analytics'].includes(view);
   const sidebarActiveKey = isExamView ? 'examinations' : (isSubjectView ? 'subjects' : view);
 
@@ -131,7 +132,7 @@ export default function TeacherDashboard() {
       {selExam && (
         <>
           <span className={styles.breadcrumbSep}>›</span>
-          <span className={view === 'preview-exam' ? styles.breadcrumbActive : styles.breadcrumbLink} onClick={() => nav('manage-questions', null, null, null, selExam)}>
+          <span className={view === 'preview-exam' || view === 'answer-sheets' ? styles.breadcrumbLink : styles.breadcrumbActive} onClick={() => nav('manage-questions', null, null, null, selExam)}>
             {selExam.title}
           </span>
         </>
@@ -140,6 +141,7 @@ export default function TeacherDashboard() {
       {view === 'edit-exam' && <><span className={styles.breadcrumbSep}>›</span><span className={styles.breadcrumbActive}>Edit Details</span></>}
       {view === 'manage-questions' && <><span className={styles.breadcrumbSep}>›</span><span className={styles.breadcrumbActive}>Questions & Rubrics</span></>}
       {view === 'preview-exam' && <><span className={styles.breadcrumbSep}>›</span><span className={styles.breadcrumbActive}>Review & Publish</span></>}
+      {view === 'answer-sheets' && <><span className={styles.breadcrumbSep}>›</span><span className={styles.breadcrumbActive}>Submissions</span></>}
     </div>
   ) : (
     <div className={styles.breadcrumb}>
@@ -176,13 +178,14 @@ export default function TeacherDashboard() {
         <DashboardTopBar showBack={view !== 'examinations' && view !== 'subjects' && view !== 'reeval' && view !== 'students'} breadcrumb={breadcrumb} />
 
         <div className={styles.content}>
-          {/* ── Phase 2 Examinations & Rubrics Views ── */}
+          {/* ── Phase 2 & 3 Examinations, Rubrics & Answer Sheets Views ── */}
           {view === 'examinations' && (
             <ExaminationDashboard
               onCreateExam={() => nav('create-exam')}
               onEditExam={(e) => { setExam(e); nav('edit-exam', null, null, null, e); }}
               onManageQuestions={(e) => { setExam(e); nav('manage-questions', null, null, null, e); }}
               onPreviewExam={(e) => { setExam(e); nav('preview-exam', null, null, null, e); }}
+              onViewAnswerSheets={(e) => { setExam(e); nav('answer-sheets', null, null, null, e); }}
               showToast={showToast}
             />
           )}
@@ -215,6 +218,13 @@ export default function TeacherDashboard() {
               onBack={() => nav('examinations')}
               onManageQuestions={(e) => nav('manage-questions', null, null, null, e || selExam)}
               onPublished={() => nav('examinations')}
+              showToast={showToast}
+            />
+          )}
+          {view === 'answer-sheets' && selExam && (
+            <AnswerSheetsViewer
+              exam={selExam}
+              onBack={() => nav('examinations')}
               showToast={showToast}
             />
           )}

@@ -42,3 +42,25 @@ next-env.d.ts
 
 # uploads
 /uploads
+
+# MongoDB local database
+data/db/
+backend/data/db/
+
+# Runtime uploads and generated documents
+backend/uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Next.js
+.next/
+node_modules/

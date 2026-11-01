@@ -71,10 +71,25 @@ def document_repo():
 
 
 @pytest.fixture
-def client(exam_repo, question_repo, answer_key_repo, rubric_repo, document_repo):
+def page_repo():
+    from tests.conftest_phase2 import MockDocumentPageRepository
+    return MockDocumentPageRepository()
+
+
+@pytest.fixture
+def job_repo():
+    from tests.conftest_phase2 import MockProcessingJobRepository
+    return MockProcessingJobRepository()
+
+
+@pytest.fixture
+def client(exam_repo, question_repo, answer_key_repo, rubric_repo, document_repo, page_repo, job_repo):
     from app.api.dependencies.auth import get_user_repo, get_current_user
     from app.api.dependencies.phase2 import (
         get_exam_repo, get_question_repo, get_answer_key_repo, get_rubric_repo, get_document_repo,
+    )
+    from app.api.dependencies.phase3 import (
+        get_document_page_repo, get_processing_job_repo,
     )
     from tests.conftest import MockUserRepository
     from app.main import app
@@ -90,6 +105,8 @@ def client(exam_repo, question_repo, answer_key_repo, rubric_repo, document_repo
     app.dependency_overrides[get_answer_key_repo] = lambda: answer_key_repo
     app.dependency_overrides[get_rubric_repo] = lambda: rubric_repo
     app.dependency_overrides[get_document_repo] = lambda: document_repo
+    app.dependency_overrides[get_document_page_repo] = lambda: page_repo
+    app.dependency_overrides[get_processing_job_repo] = lambda: job_repo
 
     with (
         patch("app.main.connect_to_mongo"),
@@ -106,10 +123,13 @@ def client(exam_repo, question_repo, answer_key_repo, rubric_repo, document_repo
 
 
 @pytest.fixture
-def student_client(exam_repo, question_repo, answer_key_repo, rubric_repo, document_repo):
+def student_client(exam_repo, question_repo, answer_key_repo, rubric_repo, document_repo, page_repo, job_repo):
     from app.api.dependencies.auth import get_user_repo
     from app.api.dependencies.phase2 import (
         get_exam_repo, get_question_repo, get_answer_key_repo, get_rubric_repo, get_document_repo,
+    )
+    from app.api.dependencies.phase3 import (
+        get_document_page_repo, get_processing_job_repo,
     )
     from tests.conftest import MockUserRepository
     from app.main import app
@@ -125,6 +145,8 @@ def student_client(exam_repo, question_repo, answer_key_repo, rubric_repo, docum
     app.dependency_overrides[get_answer_key_repo] = lambda: answer_key_repo
     app.dependency_overrides[get_rubric_repo] = lambda: rubric_repo
     app.dependency_overrides[get_document_repo] = lambda: document_repo
+    app.dependency_overrides[get_document_page_repo] = lambda: page_repo
+    app.dependency_overrides[get_processing_job_repo] = lambda: job_repo
 
     with (
         patch("app.main.connect_to_mongo"),

@@ -24,6 +24,7 @@ export default function ExaminationDashboard({
   onEditExam,
   onManageQuestions,
   onPreviewExam,
+  onViewAnswerSheets,
   showToast,
 }) {
   const [stats, setStats] = useState({ total: 0, draft: 0, published: 0, archived: 0 });
@@ -238,6 +239,9 @@ export default function ExaminationDashboard({
                   <SmPurpleButton onClick={() => onManageQuestions(exam)}>
                     Questions & Rubrics
                   </SmPurpleButton>
+                  <SmOutlineButton onClick={() => onViewAnswerSheets?.(exam)}>
+                    Submissions
+                  </SmOutlineButton>
                   <SmOutlineButton onClick={() => onPreviewExam(exam)}>
                     Preview
                   </SmOutlineButton>
